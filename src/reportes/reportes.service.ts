@@ -12,7 +12,7 @@ export class ReportesService {
     private readonly asistenciaModel: Model<Asistencia>,
   ) {}
 
-  // 📄 Reporte general de asistencias
+  //Reporte general de asistencias
   async generarReporteAsistencias(
     res: Response,
     docenteId?: string,
@@ -53,7 +53,7 @@ export class ReportesService {
     res.end();
   }
 
-  // ⏱️ Reporte de horas dictadas por docente
+  //Reporte de horas dictadas por docente
   async generarReporteHorasPorDocente(
     res: Response,
     docenteId?: string,
@@ -108,7 +108,7 @@ export class ReportesService {
     res.end();
   }
 
-  // ⚠️ Reporte de incidencias
+  //Reporte de incidencias
   async generarReporteIncidencias(
     res: Response,
     docenteId?: string,
@@ -149,7 +149,7 @@ export class ReportesService {
     res.end();
   }
 
-  // 📊 Reporte general combinado (3 hojas)
+  //Reporte general combinado (3 hojas)
   async generarReporteGeneral(res: Response, fechaInicio?: string, fechaFin?: string) {
     const filtros: any = {};
     if (fechaInicio && fechaFin)
@@ -157,7 +157,7 @@ export class ReportesService {
 
     const asistencias = await this.asistenciaModel.find(filtros).lean();
 
-    // Agrupar para horas
+    //Agrupar para horas
     const agregados = await this.asistenciaModel.aggregate([
       { $match: filtros },
       {
@@ -169,12 +169,12 @@ export class ReportesService {
       },
     ]);
 
-    // Filtrar incidencias
+    //Filtrar incidencias
     const incidencias = asistencias.filter((a) => a.estado !== 'Presente');
 
     const workbook = new ExcelJS.Workbook();
 
-    // 🟢 Hoja 1: Asistencias
+    //Hoja 1: Asistencias
     const wsAsist = workbook.addWorksheet('Asistencias');
     wsAsist.columns = [
       { header: 'Docente ID', key: 'docenteId', width: 20 },
@@ -186,7 +186,7 @@ export class ReportesService {
     asistencias.forEach((a) => wsAsist.addRow(a));
     wsAsist.getRow(1).font = { bold: true };
 
-    // 🕐 Hoja 2: Horas por Docente
+    //Hoja 2: Horas por Docente
     const wsHoras = workbook.addWorksheet('Horas por Docente');
     wsHoras.columns = [
       { header: 'Docente ID', key: 'docenteId', width: 25 },
@@ -202,13 +202,13 @@ export class ReportesService {
     );
     wsHoras.getRow(1).font = { bold: true };
 
-    // ⚠️ Hoja 3: Incidencias
+    //Hoja 3: Incidencias
     const wsIncid = workbook.addWorksheet('Incidencias');
     wsIncid.columns = wsAsist.columns;
     incidencias.forEach((i) => wsIncid.addRow(i));
     wsIncid.getRow(1).font = { bold: true };
 
-    // 🧾 Enviar el Excel
+    //Enviar el Excel
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

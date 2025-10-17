@@ -43,4 +43,48 @@ export class ReportesService {
     await workbook.xlsx.write(res);
     res.end();
   }
+
+  // Reporte de horas dictadas por docente
+  async generarReporteHorasPorDocente(res: Response) {
+    const agregados = await this.asistenciaModel.aggregate([
+      {
+        $group: {
+          _id: '$docenteId',
+          totalHoras: { $sum: '$horasDictadas' },
+          totalClases: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Horas por Docente');
+
+    worksheet.columns = [
+      { header: 'Docente ID', key: 'docenteId', width: 25 },
+      { header: 'Total de Clases', key: 'totalClases', width: 20 },
+      { header: 'Total de Horas Dictadas', key: 'totalHoras', width: 25 },
+    ];
+
+    agregados.forEach((d) =>
+      worksheet.addRow({
+        docenteId: d._id,
+        totalClases: d.totalClases,
+        totalHoras: d.totalHoras,
+      }),
+    );
+
+    worksheet.getRow(1).font = { bold: true };
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="reporte_horas_docentes.xlsx"',
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  }
 }

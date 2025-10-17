@@ -6,9 +6,15 @@ import { Response } from 'express';
 export class ReportesController {
   constructor(private readonly reportesService: ReportesService) {}
 
-  // Reporte general de asistencias
+  //Reporte general de asistencias
   @Get('asistencias')
   async descargarReporteAsistencias(@Res() res: Response) {
     return this.reportesService.generarReporteAsistencias(res);
+  }
+
+  //Reporte de horas dictadas por docente
+  @Get('horas-docentes')
+  async descargarReporteHoras(@Res() res: Response) {
+    return this.reportesService.generarReporteHorasPorDocente(res);
   }
 }

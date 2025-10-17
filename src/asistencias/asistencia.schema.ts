@@ -17,6 +17,9 @@ export class Asistencia extends Document {
 
   @Prop()
   observaciones?: string;
+
+  @Prop({ required: true })
+  horasDictadas: number;
 }
 
 export const AsistenciaSchema = SchemaFactory.createForClass(Asistencia);

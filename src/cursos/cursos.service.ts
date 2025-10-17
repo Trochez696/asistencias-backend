@@ -29,4 +29,34 @@ export class CursosService {
   async remove(id: string): Promise<Curso | null> {
     return this.cursoModel.findByIdAndDelete(id);
   }
+
+  async importarDesdeExcel(data: any[]): Promise<any> {
+  const resultados: any[] = [];
+
+  for (const fila of data) {
+    const curso = {
+      nombre: fila['Nombre'] || fila['nombre'],
+      codigo: fila['Código'] || fila['codigo'],
+      docenteId: fila['DocenteId'] || fila['docenteId'],
+      horario: fila['Horario'] || fila['horario'],
+      semestre: fila['Semestre'] || fila['semestre'],
+      aula: fila['Aula'] || fila['aula'],
+    };
+
+    // Solo guarda si el código no existe aún
+    const existente = await this.cursoModel.findOne({ codigo: curso.codigo });
+    if (!existente) {
+      const nuevo = new this.cursoModel(curso);
+      const guardado = await nuevo.save();
+      resultados.push(guardado);
+    }
+  }
+
+  return {
+    mensaje: `Se importaron ${resultados.length} cursos correctamente`,
+    cursos: resultados,
+  };
 }
+}
+
+

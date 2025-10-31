@@ -12,6 +12,10 @@ export class ReportesService {
     private readonly asistenciaModel: Model<Asistencia>,
   ) {}
 
+  // -------------------------------------------------------
+  //REPORTES EN EXCEL
+  // -------------------------------------------------------
+
   //Reporte general de asistencias
   async generarReporteAsistencias(
     res: Response,
@@ -40,14 +44,8 @@ export class ReportesService {
     asistencias.forEach((a) => worksheet.addRow(a));
     worksheet.getRow(1).font = { bold: true };
 
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    );
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="reporte_asistencias.xlsx"',
-    );
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="reporte_asistencias.xlsx"');
 
     await workbook.xlsx.write(res);
     res.end();
@@ -95,14 +93,8 @@ export class ReportesService {
 
     worksheet.getRow(1).font = { bold: true };
 
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    );
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="reporte_horas_docentes.xlsx"',
-    );
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="reporte_horas_docentes.xlsx"');
 
     await workbook.xlsx.write(res);
     res.end();
@@ -136,14 +128,8 @@ export class ReportesService {
     incidencias.forEach((i) => worksheet.addRow(i));
     worksheet.getRow(1).font = { bold: true };
 
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    );
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="reporte_incidencias.xlsx"',
-    );
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="reporte_incidencias.xlsx"');
 
     await workbook.xlsx.write(res);
     res.end();
@@ -209,13 +195,43 @@ export class ReportesService {
     wsIncid.getRow(1).font = { bold: true };
 
     //Enviar el Excel
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    );
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename="reporte_general.xlsx"');
 
     await workbook.xlsx.write(res);
     res.end();
+  }
+
+  // -------------------------------------------------------
+  // FILTROS DE CONSULTA (JSON)
+  // -------------------------------------------------------
+
+  async filtrarPorDocente(docenteId: string) {
+    return this.asistenciaModel
+      .find({ docenteId })
+      .populate('docenteId')
+      .populate('cursoId')
+      .lean();
+  }
+
+  async filtrarPorCurso(cursoId: string) {
+    return this.asistenciaModel
+      .find({ cursoId })
+      .populate('docenteId')
+      .populate('cursoId')
+      .lean();
+  }
+
+  async filtrarPorFechas(fechaInicio: string, fechaFin: string) {
+    return this.asistenciaModel
+      .find({
+        fecha: {
+          $gte: new Date(fechaInicio),
+          $lte: new Date(fechaFin),
+        },
+      })
+      .populate('docenteId')
+      .populate('cursoId')
+      .lean();
   }
 }

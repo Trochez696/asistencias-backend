@@ -1,0 +1,16 @@
+services:
+  backend:
+    build: .
+    container_name: nest_backend
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - MONGO_URI=mongodb+srv://Proyecto_DS_II:5tGOjQkDhH67sf9t@cluster0.uux2ndk.mongodb.net/AsistenciasDB?retryWrites=true&w=majority&appName=Cluster0
+    # 🔹 Quitamos los volúmenes porque tu build ya copia el código
+    # (mantenerlos solo tiene sentido si haces desarrollo en vivo)
+    # volumes:
+    #   - .:/usr/src/app
+    #   - /usr/src/app/node_modules
+    # 🔹 Usamos el comando final del Dockerfile (no start:dev)
+    command: ["node", "dist/main.js"]

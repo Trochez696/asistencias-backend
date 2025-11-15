@@ -1,13 +1,14 @@
+// En asistencia.schema.ts - Asegúrate de que tenga estas referencias
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Asistencia extends Document {
-  @Prop({ required: true })
-  docenteId: string;
+  @Prop({ type: Types.ObjectId, ref: 'Docente', required: true })
+  docenteId: Types.ObjectId;
 
-  @Prop({ required: true })
-  cursoId: string;
+  @Prop({ type: Types.ObjectId, ref: 'Curso', required: true })
+  cursoId: Types.ObjectId;
 
   @Prop({ required: true })
   fecha: Date;

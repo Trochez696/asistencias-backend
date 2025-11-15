@@ -1,3 +1,4 @@
+// src/reportes/reportes.controller.ts
 import { Controller, Get, Query, Res } from '@nestjs/common';
 import { ReportesService } from './reportes.service';
 import { Response } from 'express';
@@ -33,6 +34,22 @@ export class ReportesController {
     return this.reportesService.generarReporteHorasPorDocente(
       res,
       docenteId,
+      fechaInicio,
+      fechaFin,
+    );
+  }
+
+  // 📚 NUEVO: Reporte de horas por curso
+  @Get('horas-cursos')
+  async descargarReporteHorasCursos(
+    @Res() res: Response,
+    @Query('cursoId') cursoId?: string,
+    @Query('fechaInicio') fechaInicio?: string,
+    @Query('fechaFin') fechaFin?: string,
+  ) {
+    return this.reportesService.generarReporteHorasPorCurso(
+      res,
+      cursoId,
       fechaInicio,
       fechaFin,
     );

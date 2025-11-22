@@ -11,7 +11,7 @@ import { AgendaModule } from './agenda/agenda.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRoot(process.env.MONGO_URI as string, {
-      dbName: 'AsistenciasDB',
+      dbName: 'registro-universidad',
     }),
     DocentesModule,
     CursosModule,

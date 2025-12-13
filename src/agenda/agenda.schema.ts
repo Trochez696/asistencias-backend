@@ -16,16 +16,21 @@ export class Agenda extends Document {
   nombreDocente: string;
 
   @Prop({ required: true })
-  diaSemana: string; // Ejemplo: "Lunes", "Martes", etc.
+  diaSemana: string;
 
   @Prop({ required: true })
-  horaInicio: string; // Ejemplo: "08:00"
+  horaInicio: string;
 
   @Prop({ required: true })
-  horaFin: string; // Ejemplo: "10:00"
+  horaFin: string;
 
   @Prop({ required: true })
   salon: string;
 }
 
 export const AgendaSchema = SchemaFactory.createForClass(Agenda);
+
+AgendaSchema.index(
+  { cursoId: 1, diaSemana: 1, horaInicio: 1, horaFin: 1 },
+  { unique: true }
+);

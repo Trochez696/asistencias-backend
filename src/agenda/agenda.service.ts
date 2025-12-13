@@ -12,44 +12,131 @@ export class AgendaService {
     private readonly agendaModel: Model<Agenda>,
   ) {}
 
-  // 📥 Importar agenda desde un archivo Excel
+  // 📥 Importar agenda del semestre desde Excel
   async importarAgenda(file: Express.Multer.File) {
     if (!file) {
-      throw new BadRequestException('Debe subir un archivo Excel válido.');
+      throw new BadRequestException('Debe subir un archivo Excel');
+    }
+
+    if (!file.originalname.endsWith('.xlsx')) {
+      throw new BadRequestException('El archivo debe tener formato .xlsx');
     }
 
     const workbook = XLSX.read(file.buffer, { type: 'buffer' });
     const hoja = workbook.Sheets[workbook.SheetNames[0]];
-    const datos = XLSX.utils.sheet_to_json(hoja);
+    const datos = XLSX.utils.sheet_to_json(hoja, { defval: '' });
 
     if (!datos.length) {
-      throw new BadRequestException('El archivo está vacío o mal estructurado.');
+      throw new BadRequestException('El archivo Excel no contiene registros');
     }
 
-    // Limpiamos la colección antes de importar (opcional)
-    await this.agendaModel.deleteMany({});
+    const errores: string[] = [];
+    let procesados = 0;
 
-    // Mapeamos los datos del Excel a nuestro modelo
-    const registros = datos.map((fila: any) => ({
-      cursoId: String(fila['Curso ID'] || ''),
-      docenteId: String(fila['Docente ID'] || ''),
-      nombreCurso: String(fila['Nombre Curso'] || ''),
-      nombreDocente: String(fila['Nombre Docente'] || ''),
-      diaSemana: String(fila['Día Semana'] || ''),
-      horaInicio: String(fila['Hora Inicio'] || ''),
-      horaFin: String(fila['Hora Fin'] || ''),
-      salon: String(fila['Salón'] || ''),
-    }));
+    for (let i = 0; i < datos.length; i++) {
+      const fila = datos[i] as any;
+      const filaExcel = i + 2;
 
-    const resultado = await this.agendaModel.insertMany(registros);
+      const cursoId = String(fila['Curso ID']).trim();
+      const docenteId = String(fila['Docente ID']).trim();
+      const nombreCurso = String(fila['Nombre Curso']).trim();
+      const nombreDocente = String(fila['Nombre Docente']).trim();
+      const diaSemana = String(fila['Día Semana']).trim();
+      const horaInicio = String(fila['Hora Inicio']).trim();
+      const horaFin = String(fila['Hora Fin']).trim();
+      const salon = String(fila['Salón']).trim();
+
+      if (
+        !cursoId ||
+        !docenteId ||
+        !nombreCurso ||
+        !nombreDocente ||
+        !diaSemana ||
+        !horaInicio ||
+        !horaFin ||
+        !salon
+      ) {
+        errores.push(`Fila ${filaExcel}: campos obligatorios incompletos`);
+        continue;
+      }
+
+      if (!this.diaSemanaValido(diaSemana)) {
+        errores.push(`Fila ${filaExcel}: día de la semana inválido`);
+        continue;
+      }
+
+      if (!this.horaValida(horaInicio) || !this.horaValida(horaFin)) {
+        errores.push(`Fila ${filaExcel}: formato de hora inválido`);
+        continue;
+      }
+
+      if (horaInicio >= horaFin) {
+        errores.push(
+          `Fila ${filaExcel}: la hora de inicio debe ser menor que la hora fin`,
+        );
+        continue;
+      }
+
+      try {
+        await this.agendaModel.findOneAndUpdate(
+          {
+            cursoId,
+            diaSemana,
+            horaInicio,
+            horaFin,
+          },
+          {
+            cursoId,
+            docenteId,
+            nombreCurso,
+            nombreDocente,
+            diaSemana,
+            horaInicio,
+            horaFin,
+            salon,
+          },
+          { upsert: true, new: true },
+        );
+
+        procesados++;
+      } catch (error) {
+        errores.push(`Fila ${filaExcel}: conflicto al guardar el registro`);
+      }
+    }
+
+    if (errores.length > 0) {
+      throw new BadRequestException({
+        mensaje: 'El archivo contiene errores y no fue importado',
+        errores,
+      });
+    }
+
     return {
-      mensaje: `Se importaron ${resultado.length} registros correctamente.`,
-      total: resultado.length,
+      mensaje: 'Agenda del semestre importada correctamente',
+      registrosProcesados: procesados,
     };
   }
 
-  // 📄 Obtener toda la agenda
+  // 📄 Consultar agenda completa
   async obtenerAgenda() {
-    return this.agendaModel.find().lean();
+    return this.agendaModel
+      .find()
+      .sort({ diaSemana: 1, horaInicio: 1 })
+      .lean();
+  }
+
+  private horaValida(hora: string): boolean {
+    return /^([01]\d|2[0-3]):([0-5]\d)$/.test(hora);
+  }
+
+  private diaSemanaValido(dia: string): boolean {
+    return [
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+    ].includes(dia);
   }
 }
